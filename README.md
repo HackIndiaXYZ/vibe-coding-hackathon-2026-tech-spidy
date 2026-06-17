@@ -1,36 +1,54 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Dream Architect
 
-## Getting Started
+**Walk back into your dreams.**
 
-First, run the development server:
+A dream journal where every entry becomes a walkable 3D dreamscape. Describe a dream
+in plain words and it's compiled into a navigable scene; dreams accumulate into a 3D
+constellation archive, and a motif engine surfaces the recurring "dream signs" hiding
+across them.
+
+> Pitch flanks: lucid-dream training · nightmare therapy (imagery rehearsal) ·
+> "Notion for your subconscious."
+
+Built for the HackIndia Vibe Coding Hackathon 2026 — Team Tech Spidy.
+
+## Experience
+
+- **Landing** (`/`) — cinematic, scroll-driven intro: dream hero, pinned pipeline,
+  a horizontal painterly dream gallery, doorway-of-light CTA.
+- **Archive** (`/archive`) — the real thing: a 3D constellation of dreams you can
+  fly through, then drop into any dream as a first-person walkable scene with a
+  look-to-reveal narrative HUD.
+
+## Stack
+
+- **Next.js 16** (Turbopack, App Router) · **React 19** · **TypeScript**
+- **react-three-fiber** + **drei** + **three** — the 3D renderer
+- **GSAP** + **ScrollTrigger** · **Lenis** smooth scroll · **Framer Motion**
+- UnrealBloom + ACES tone mapping for the dream-quality post-processing
+- No backend, no auth — your dreams never leave your device
+
+## Run locally
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev      # http://localhost:3000
+npm run build    # production build / type gate
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Structure
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+app/
+  page.tsx            landing route
+  archive/page.tsx    3D archive route
+components/
+  landing/*           scroll-driven landing sections
+  r3f/*               SceneWorld, ConstellationWorld, PostFX
+lib/
+  three/*             terrain, objects, atmosphere, buildScene, controls
+  dream.ts            Scene-JSON schema + parsing
+  insight.ts          motif / dream-sign detection
+  seeds.ts            seed dreams
+public/dreams/        painterly dream imagery
+```
