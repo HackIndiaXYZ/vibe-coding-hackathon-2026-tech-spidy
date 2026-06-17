@@ -84,7 +84,7 @@ function rainbow(scene: THREE.Scene, x: number, z: number, radius: number) {
     const arc = new THREE.Mesh(
       new THREE.TorusGeometry(radius - i * band * 0.95, band * 0.55, 6, 90, Math.PI),
       new THREE.MeshBasicMaterial({
-        color: c, transparent: true, opacity: 0.5, fog: false,
+        color: c, transparent: true, opacity: 0.68, fog: false,
         blending: THREE.AdditiveBlending, depthWrite: false,
       }));
     group.add(arc);
@@ -191,9 +191,16 @@ export function buildAtmosphere(scene: THREE.Scene, dream: Dream, onFlash?: (v: 
     }
   });
 
-  const amb = new THREE.AmbientLight(0xffffff, dream.lighting.ambient || 0.4);
+  const ambBase = dream.lighting.ambient || 0.4;
+  const amb = new THREE.AmbientLight(0xffffff, ambBase * 0.7);
   amb.userData.base = amb.intensity;
   scene.add(amb);
+  // sky/ground hemisphere fill — gives rounded forms a value gradient (lit from
+  // the sky tone above, the ground tone below) instead of reading as flat cutouts.
+  const skyCol = new THREE.Color(pal.sky_top).lerp(new THREE.Color(pal.sky_bottom), 0.5);
+  const hemi = new THREE.HemisphereLight(skyCol, new THREE.Color(pal.ground), ambBase * 0.6);
+  hemi.position.set(0, 60, 0);
+  scene.add(hemi);
   const key = new THREE.DirectionalLight(dream.lighting.key_color || "#ffffff", dream.lighting.key_intensity || 1.0);
   const kp = dream.lighting.key_position || [40, 60, -80];
   key.position.set(kp[0], kp[1], kp[2]);

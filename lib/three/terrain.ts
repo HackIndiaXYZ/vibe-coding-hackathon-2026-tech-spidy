@@ -14,22 +14,35 @@ function noise(x: number, z: number) {
     + Math.cos(x * 0.4 - z * 0.3) * 0.35;
 }
 
-function flat(scene: THREE.Scene, pal: Dream["palette"]) {
-  const g = new THREE.Mesh(new THREE.CircleGeometry(220, 48), std(pal.ground, 1.0));
-  g.rotation.x = -Math.PI / 2;
-  scene.add(g);
-}
-
-function displaced(scene: THREE.Scene, pal: Dream["palette"], amp: number, color: string, rough?: number) {
-  const geo = new THREE.PlaneGeometry(440, 440, 80, 80);
+// One ground for every open terrain: a displaced plane (flat right around the
+// spawn, rolling further out) with per-vertex value variation — lighter on the
+// rises, sunk into shadow in the hollows and toward the fogged rim — so it reads
+// as painted land instead of a single flat swatch of colour.
+function ground(scene: THREE.Scene, pal: Dream["palette"], amp: number, color?: string, rough?: number) {
+  const SIZE = 480, SEG = 96;
+  const geo = new THREE.PlaneGeometry(SIZE, SIZE, SEG, SEG);
   const p = geo.attributes.position as THREE.BufferAttribute;
+  const base = new THREE.Color(color || pal.ground);
+  const shade = base.clone().multiplyScalar(0.55); // hollow / horizon shadow
+  const colors = new Float32Array(p.count * 3);
+  const tmp = new THREE.Color();
+  const span = Math.max(amp, 0.8);
   for (let i = 0; i < p.count; i++) {
     const x = p.getX(i), y = p.getY(i);
-    const fade = Math.min(1, Math.hypot(x, y) / 30);
-    p.setZ(i, noise(x, y) * amp * fade);
+    const d = Math.hypot(x, y);
+    const fade = Math.min(1, d / 24); // keep the walkable spawn area level
+    const h = noise(x, y) * amp * fade;
+    p.setZ(i, h);
+    const lift = Math.max(-0.5, Math.min(0.5, h / span)); // -0.5 hollow .. +0.5 rise
+    const rim = 1 - Math.min(1, Math.max(0, (d - 55) / 180)) * 0.5;
+    tmp.copy(base).lerp(shade, 0.4 - lift * 0.5).multiplyScalar(rim);
+    colors[i * 3] = tmp.r; colors[i * 3 + 1] = tmp.g; colors[i * 3 + 2] = tmp.b;
   }
+  geo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
   geo.computeVertexNormals();
-  const m = new THREE.Mesh(geo, std(color || pal.ground, rough == null ? 1.0 : rough));
+  const m = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({
+    vertexColors: true, roughness: rough == null ? 1.0 : rough, metalness: 0.0,
+  }));
   m.rotation.x = -Math.PI / 2;
   scene.add(m);
 }
@@ -78,9 +91,7 @@ function room(scene: THREE.Scene, pal: Dream["palette"], ceilingIsSky?: boolean)
 }
 
 function stream(scene: THREE.Scene, pal: Dream["palette"]): UpdateFn {
-  const ground = new THREE.Mesh(new THREE.CircleGeometry(220, 48), std(pal.ground, 1.0));
-  ground.rotation.x = -Math.PI / 2;
-  scene.add(ground);
+  ground(scene, pal, 0.7);
   const { mesh, update } = waterSheet(scene, pal, 9, -0.18, 60);
   mesh.scale.set(1, 40, 1); // pre-rotation Y => world Z: a long channel
   return update;
@@ -109,9 +120,9 @@ export function buildTerrain(scene: THREE.Scene, dream: Dream): UpdateFn | undef
   else if (t === "room") room(scene, pal, anom.ceiling_is_sky);
   else if (t === "water") update = waterSheet(scene, pal, 460, -0.4, 96).update;
   else if (t === "stream") update = stream(scene, pal);
-  else if (t === "hills") displaced(scene, pal, 6.0, pal.ground, 1.0);
-  else if (t === "sand") displaced(scene, pal, 3.0, pal.ground, 1.0);
-  else flat(scene, pal);
+  else if (t === "hills") ground(scene, pal, 6.0);
+  else if (t === "sand") ground(scene, pal, 3.0);
+  else ground(scene, pal, 0.6);
 
   if (anom.floating_islands) floatingIslands(scene, pal);
   return update;

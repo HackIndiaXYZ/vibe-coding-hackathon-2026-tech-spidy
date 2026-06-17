@@ -203,9 +203,9 @@ export const SEEDS: Record<string, Dream> = {
     lighting: { ambient: 0.6, key_color: "#fff0d0", key_intensity: 1.0, key_position: [30, 40, -20] },
     sky_features: [{ type: "sun", scale: "normal", color: "#fff2cf" }],
     objects: [
-      { type: "cube", label: "the paper boat", color: "#f4f0e6", scale: [0.9, 0.3, 0.5], behavior: "drift", position: [0, 0, -6] },
+      { type: "boat", label: "the paper boat", color: "#f4f0e6", behavior: "drift", position: [0, 0, -6] },
       { type: "tree", label: "village trees", count: 10, scatter_radius: 28, color: "#1a3a1e" },
-      { type: "cube", label: "village houses", count: 6, scatter_radius: 24, color: "#3a2a1e", scale: [4, 4, 5] },
+      { type: "house", label: "village houses", count: 6, scatter_radius: 24, color: "#3a2a1e", scale: [4, 4, 5] },
     ],
     anomalies: { gravity_tilt_deg: 0, giant_scale: true, floating_islands: false, ceiling_is_sky: false },
     particles: { type: "dust", density: 150 },

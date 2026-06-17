@@ -44,15 +44,28 @@ function figure(spec: DreamObject, accent: string) {
   return g;
 }
 
+// Broadleaf, not coniferous — these stand in for sal trees and jungle canopy.
+// Trunk + a cluster of faceted foliage blobs, each call jittered in height,
+// rotation and hue so a stand of them never reads as cloned cones.
 function tree(spec: DreamObject) {
   const g = new THREE.Group();
-  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.26, 2.6, 8), std("#191209", 1));
-  trunk.position.y = 1.3;
-  const c1 = new THREE.Mesh(new THREE.ConeGeometry(1.7, 3.2, 8), std(spec.color || "#0d211b", 1));
-  c1.position.y = 3.9;
-  const c2 = new THREE.Mesh(new THREE.ConeGeometry(1.25, 2.4, 8), std(spec.color || "#0f2a20", 1));
-  c2.position.y = 5.3;
-  g.add(trunk, c1, c2);
+  const tone = new THREE.Color(spec.color || "#0e2a18");
+  const h = 2.6 + Math.random() * 1.8;
+  const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.24, h, 7), std("#241a10", 1));
+  trunk.position.y = h / 2;
+  g.add(trunk);
+  const blobs = 3;
+  for (let i = 0; i < blobs; i++) {
+    const r = 1.7 - i * 0.34 + Math.random() * 0.25;
+    const c = tone.clone().multiplyScalar(0.78 + Math.random() * 0.5);
+    const m = new THREE.Mesh(new THREE.IcosahedronGeometry(r, 1),
+      new THREE.MeshStandardMaterial({ color: c, roughness: 1, flatShading: true }));
+    m.position.set((Math.random() - 0.5) * 0.8, h + 0.4 + i * 0.95, (Math.random() - 0.5) * 0.8);
+    m.scale.y = 0.82;
+    g.add(m);
+  }
+  g.rotation.y = Math.random() * Math.PI * 2;
+  g.scale.setScalar(0.85 + Math.random() * 0.5);
   return g;
 }
 
@@ -170,6 +183,58 @@ function windowObj(spec: DreamObject, accent: string) {
   return g;
 }
 
+// A folded paper boat — pointed hull + the triangular sail fold standing up.
+function boat(spec: DreamObject) {
+  const g = new THREE.Group();
+  const paper = new THREE.MeshStandardMaterial({
+    color: new THREE.Color(spec.color || "#f4f0e6"), roughness: 0.55,
+    emissive: new THREE.Color("#f4f0e6"), emissiveIntensity: 0.12,
+    side: THREE.DoubleSide, flatShading: true,
+  });
+  const hull = new THREE.Mesh(new THREE.OctahedronGeometry(0.62, 0), paper);
+  hull.scale.set(1.7, 0.42, 0.66);
+  hull.position.y = 0.26;
+  const sail = new THREE.Mesh(new THREE.ConeGeometry(0.5, 0.82, 4), paper);
+  sail.rotation.y = Math.PI / 4;
+  sail.position.y = 0.7;
+  g.add(hull, sail);
+  return g;
+}
+
+// Village house — walls + a pitched roof. Sized from spec.scale so the giant_scale
+// child-POV dreams still make them loom.
+function house(spec: DreamObject) {
+  const s = spec.scale || [4, 4, 5];
+  const g = new THREE.Group();
+  const wallH = s[1] * 0.68;
+  const wall = new THREE.Mesh(new THREE.BoxGeometry(s[0], wallH, s[2]), std(spec.color || "#3a2a1e", 0.95));
+  wall.position.y = wallH / 2;
+  const roof = new THREE.Mesh(
+    new THREE.ConeGeometry(Math.max(s[0], s[2]) * 0.8, s[1] * 0.55, 4),
+    std("#23160f", 0.9));
+  roof.rotation.y = Math.PI / 4;
+  roof.position.y = wallH + s[1] * 0.27;
+  g.add(wall, roof);
+  return g;
+}
+
+// Temple column — base + tapered shaft + capital, height from spec.scale.
+function pillar(spec: DreamObject) {
+  const s = spec.scale || [1, 4, 1];
+  const h = Math.max(2, s[1]);
+  const r = 0.45 * (s[0] || 1);
+  const col = spec.color || "#5a4658";
+  const g = new THREE.Group();
+  const shaft = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.82, r * 0.92, h, 16), std(col, 0.82));
+  shaft.position.y = h / 2 + 0.3;
+  const base = new THREE.Mesh(new THREE.BoxGeometry(r * 2.5, 0.3, r * 2.5), std(col, 0.9));
+  base.position.y = 0.15;
+  const cap = new THREE.Mesh(new THREE.BoxGeometry(r * 2.5, 0.42, r * 2.5), std(col, 0.9));
+  cap.position.y = h + 0.3 + 0.21;
+  g.add(base, shaft, cap);
+  return g;
+}
+
 function primitive(spec: DreamObject, accent: string, type: string) {
   let geo: THREE.BufferGeometry;
   if (type === "pillar") geo = new THREE.CylinderGeometry(0.5, 0.55, 1, 12);
@@ -214,12 +279,16 @@ function build(spec: DreamObject, accent: string): THREE.Object3D {
     case "crystal": return crystal(spec, accent);
     case "stair": return stair(spec);
     case "window": return windowObj(spec, accent);
+    case "boat": return boat(spec);
+    case "house": return house(spec);
+    case "pillar": return pillar(spec);
     default: return primitive(spec, accent, spec.type);
   }
 }
 
 const GEOMETRIC: Record<string, number> = {
   figure: 1, tree: 1, stall: 1, shop: 1, door: 1, orb: 1, crystal: 1, stair: 1, window: 1,
+  boat: 1, house: 1, pillar: 1,
 };
 
 function applyScale(o: THREE.Object3D, spec: DreamObject) {
